@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:xml/xml.dart';
 
 void main() {
   runApp(MyApp());
@@ -46,16 +48,20 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+  @override
+  void initState() {
+    // アプリを起動時に一度だけ実行
+    initState();
+    
+    Future(() async{
+      var url = Uri.parse('http://www.nhk.or.jp/rj/podcast/rss/english.xml');
+      print(await http.read(url));
+      var response = await http.read(url);
+      var document = XmlDocument.parse(response);
+      final enclosures = document.findAllElements('enclosure');
+      print(enclosures);
+      enclosures.first.getAttribute("url");
+      print(enclosures.first.getAttribute("url"));
     });
   }
 
@@ -126,11 +132,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+     
     );
   }
 }
