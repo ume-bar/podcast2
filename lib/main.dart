@@ -51,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     // アプリを起動時に一度だけ実行
-    initState();
+    super.initState();
     
     Future(() async{
       var url = Uri.parse('http://www.nhk.or.jp/rj/podcast/rss/english.xml');
