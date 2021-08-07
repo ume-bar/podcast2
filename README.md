@@ -50,3 +50,6 @@ _playerSubscription= flutterSound.onPlayerStateChanged.listen((e) {
     }
 }); -->
 
+https://www.flutter-study.dev/create-app/media-player/
+
+https://github.com/umatoma/flutter-study-samples/blob/master/media_player/lib/audio_player_page.dart
