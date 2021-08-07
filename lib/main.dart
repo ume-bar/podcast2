@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
+import 'package:video_player/video_player.dart';
 
 void main() {
   runApp(MyApp());
@@ -48,20 +49,26 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late VideoPlayerController _controller;
   @override
   void initState() {
     // アプリを起動時に一度だけ実行
     super.initState();
-    
-    Future(() async{
+
+    Future(() async {
       var url = Uri.parse('http://www.nhk.or.jp/rj/podcast/rss/english.xml');
-      print(await http.read(url));
+      // print(await http.read(url));
       var response = await http.read(url);
       var document = XmlDocument.parse(response);
       final enclosures = document.findAllElements('enclosure');
-      print(enclosures);
+      // print(enclosures);
       enclosures.first.getAttribute("url");
       print(enclosures.first.getAttribute("url"));
+      _controller = VideoPlayerController.network(
+          (enclosures.first.getAttribute("url")).toString());
+      _controller.initialize().then((_) {
+        setState(() {});
+      });_controller.play();
     });
   }
 
@@ -100,39 +107,38 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  IconButton(
-                    iconSize: 45.0,
-                    color: Colors.black,
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.skip_previous,
-                    ),
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                IconButton(
+                  iconSize: 45.0,
+                  color: Colors.black,
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.skip_previous,
                   ),
-                  IconButton(
-                    iconSize: 62.0,
-                    color: Colors.black,
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.play_arrow,
-                    ),
+                ),
+                IconButton(
+                  iconSize: 62.0,
+                  color: Colors.black,
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.play_arrow,
                   ),
-                    IconButton(
-                    iconSize: 45.0,
-                    color: Colors.black,
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.skip_next,
-                    ),
+                ),
+                IconButton(
+                  iconSize: 45.0,
+                  color: Colors.black,
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.skip_next,
                   ),
-                ],
+                ),
+              ],
             ),
           ],
         ),
       ),
-     
     );
   }
 }
