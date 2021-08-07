@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
+import 'package:video_player/video_player.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -48,91 +50,118 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late VideoPlayerController _controller;
   @override
   void initState() {
     // アプリを起動時に一度だけ実行
     super.initState();
-    
-    Future(() async{
+
+    Future(() async {
       var url = Uri.parse('http://www.nhk.or.jp/rj/podcast/rss/english.xml');
-      print(await http.read(url));
+      // print(await http.read(url));
       var response = await http.read(url);
       var document = XmlDocument.parse(response);
       final enclosures = document.findAllElements('enclosure');
-      print(enclosures);
+      // print(enclosures);
       enclosures.first.getAttribute("url");
       print(enclosures.first.getAttribute("url"));
+      _controller = VideoPlayerController.network(
+          (enclosures.first.getAttribute("url")).toString());
+      _controller.initialize().then((_) {
+        setState(() {});
+      });
     });
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Icon(Icons.music_video, size: 256),
+          ),
+          VideoProgressIndicator(
+            _controller,
+            allowScrubbing: true,
+          ),
+          _ProgressText(controller: _controller),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                onPressed: () {
+                  _controller
+                      .seekTo(Duration.zero)
+                      .then((_) => _controller.play());
+                },
+                icon: Icon(Icons.refresh),
+              ),
+              IconButton(
+                onPressed: () {
+                  _controller.play();
+                },
+                icon: Icon(Icons.play_arrow),
+              ),
+              IconButton(
+                onPressed: () {
+                  _controller.pause();
+                },
+                icon: Icon(Icons.pause),
+              ),
+            ],
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  IconButton(
-                    iconSize: 45.0,
-                    color: Colors.black,
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.skip_previous,
-                    ),
-                  ),
-                  IconButton(
-                    iconSize: 62.0,
-                    color: Colors.black,
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.play_arrow,
-                    ),
-                  ),
-                    IconButton(
-                    iconSize: 45.0,
-                    color: Colors.black,
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.skip_next,
-                    ),
-                  ),
-                ],
-            ),
-          ],
-        ),
-      ),
-     
     );
+  }
+}
+
+class _ProgressText extends StatefulWidget {
+  final VideoPlayerController controller;
+
+  const _ProgressText({
+    Key? key,
+    required this.controller,
+  }) : super(key: key);
+
+  @override
+  __ProgressTextState createState() => __ProgressTextState();
+}
+
+class __ProgressTextState extends State<_ProgressText> {
+  late VoidCallback _listener;
+
+  __ProgressTextState() {
+    _listener = () {
+      setState(() {});
+    };
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_listener);
+  }
+
+  @override
+  void deactivate() {
+    widget.controller.removeListener(_listener);
+    super.deactivate();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String position = widget.controller.value.position.toString();
+    final String duration = widget.controller.value.duration.toString();
+    return Text('$position / $duration');
   }
 }
